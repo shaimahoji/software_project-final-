@@ -7,10 +7,7 @@ np.random.seed(1234)
 # Get X (the N datapoints) from the input file.
 def read_data(filename):
     data_array =  np.loadtxt(filename, delimiter=',')
-    # Exclude the first column
-    filtered_array = data_array[:, 1:]
-    
-    return filtered_array
+    return data_array
 
 
 def similarity_matrix(X):
@@ -21,20 +18,34 @@ def similarity_matrix(X):
     A = np.zeros((n, n))
     
     for i in range(n):
-        for j in range(n):
-            if i != j:
-                # Computing the squared Euclidean distance.
-                dist_squared = np.sum((X[i] - X[j]) ** 2)
+        for j in range(i + 1, n):  # Only calculate for j > i
+            # Compute the squared Euclidean distance
+            dist_squared = np.sum((X[i] - X[j]) ** 2)
+            
+            # Apply the similarity formula
+            similarity = np.exp(-dist_squared / 2)
+            
+            # Assign the value symmetrically
+            A[i, j] = similarity
+            A[j, i] = similarity  # A[i, j] == A[j, i]
 
-                # Applying the similarity formula.
-                A[i, j] = np.exp(-dist_squared / 2)
+
+    #for i in range(n):
+    #    for j in range(n):
+    #        if i != j:
+    #            # Computing the squared Euclidean distance.
+    #            dist_squared = np.sum((X[i] - X[j]) ** 2)
+                
+    #            # Applying the similarity formula.
+    #            A[i, j] = np.exp(-dist_squared / 2)
     
     return A
 
 
 def diagonal_degree_matrix(X):
-    # Computing the degrees. Example: d1 = the sum of the elements in the first row in X.
-    degrees = np.sum(X, axis=1)  # Sum of each row
+    A = similarity_matrix(X)
+    # Computing the degrees. Example: d1 = the sum of the elements in the first row in A.
+    degrees = np.sum(A, axis=1)  # Sum of each row
     D = np.diag(degrees)
     return D
 
@@ -47,7 +58,7 @@ def normalized_similarity_matrix(A, D):
     W = D_inv_sqrt @ A @ D_inv_sqrt
     return W
 
-def Initialize_H(k,W):
+def Initialize_H(W, k):
     # Calculating the average of all entries of W.
     m = np.mean(W)
 
@@ -185,7 +196,7 @@ def main():
 
     result = switch_case_operation(X, K, goal)
 
-    if result == None:
+    if result is None:
         print("An Error Has Occurred")
         sys.exit()
     
