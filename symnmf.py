@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import sys
+import mysymnmf as symnmf
 
 np.random.seed(1234)
 
@@ -113,13 +114,15 @@ def handle_symnmf(X, k):
 
 def handle_sym(X):
     #print("You selected sym")
-    A = similarity_matrix(X)
+    #A = similarity_matrix(X)
+    A = symnmf.Csym(X)
     return A
 
 
 def handle_ddg(X):
     #print("You selected ddg")
-    D = diagonal_degree_matrix(X)
+    #D = diagonal_degree_matrix(X)
+    D = symnmf.Cddg(X)
     return D
 
 
@@ -171,7 +174,7 @@ def main():
 
     # datapoints
     X = read_data(input_file)
-    
+
     result = switch_case_operation(X, K, goal)
 
     if result is None:

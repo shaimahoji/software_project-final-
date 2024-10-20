@@ -107,6 +107,7 @@ Matrix sym(Matrix matrix){
             else{sym.mat[i][j]=0;}
         }
     }
+    
     return sym;  
 }
 
@@ -135,7 +136,7 @@ Matrix ddg(Matrix matrix){
                 }
             else{ddg.mat[i][j]=0;}
         }
-    }  
+    } 
     return ddg;  
 }
 
@@ -199,6 +200,7 @@ int main(int argc,char *argv[]) {
     strcpy(filename, argv[2]);
 
     matrix = read_matrix(filename);
+    print_matrix(matrix);
 
     if (strcmp(goal, "sym") == 0){print_matrix(sym(matrix));}
     if (strcmp(goal, "ddg") == 0){print_matrix(ddg(matrix));}
