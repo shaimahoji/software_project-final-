@@ -8,7 +8,8 @@ np.random.seed(1234)
 # Get X (the N datapoints) from the input file.
 def read_data(filename):
     data_array =  np.loadtxt(filename, delimiter=',')
-    return data_array
+    return data_array.tolist() # python list
+
 
 
 def similarity_matrix(X):
@@ -62,6 +63,7 @@ def initialize_H(W, k):
     # helper variable
     upper_bound = 2 * np.sqrt(m / k)
 
+
     # Initializing H with values from the interval [0, upper_bound]
     #H = np.random.uniform(0, upper_bound, (m, k))
     H = np.random.uniform(0, upper_bound, (int(W.shape[0]), int(k)))
@@ -106,6 +108,10 @@ def handle_symnmf(X, k):
 
     # A and D are found within finding W.
     W = handle_norm(X)
+    
+    # convert python list to numpy array 
+    W = np.array(W)
+
 
     H = converge(W, k)
 
@@ -113,25 +119,18 @@ def handle_symnmf(X, k):
 
 
 def handle_sym(X):
-    #print("You selected sym")
-    #A = similarity_matrix(X)
     A = symnmf.Csym(X)
-    return A
+    return A # python list
 
 
 def handle_ddg(X):
-    #print("You selected ddg")
-    #D = diagonal_degree_matrix(X)
     D = symnmf.Cddg(X)
-    return D
+    return D # python list
 
 
 def handle_norm(X):
-    #print("You selected norm")
-    A = handle_sym(X)
-    D = handle_ddg(X)
-    W = normalized_similarity_matrix(A, D)
-    return W
+    W =  symnmf.Cnorm(X)
+    return W # python list
 
 # Dictionary mapping goals to functions.
 switch = {
@@ -149,7 +148,6 @@ def switch_case_operation(X, k, operation):
         else:
             return switch[operation](X)
     else:
-        #return "An Error Has Occurred"
         return None
 
 

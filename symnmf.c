@@ -4,17 +4,45 @@
 #include <math.h>
 #include "symnmf.h"
 
-//allocating space for the matrix
+
+// Allocating space for a matrix and initializing all elements to zero
 Matrix create_matrix(int rows, int cols) {
     Matrix matrix;
-    int i;
+    int i, j;
+
     matrix.rows = rows;
     matrix.cols = cols;
 
+    // Allocate memory for the matrix rows
     matrix.mat = (float **)malloc(rows * sizeof(float *));
+    if (matrix.mat == NULL) {
+        fprintf(stderr, "Memory allocation failed for matrix rows.\n");
+        matrix.rows = matrix.cols = 0;
+        return matrix;
+    }
+
+    // Allocate and initialize each row to zero
     for (i = 0; i < rows; i++) {
         matrix.mat[i] = (float *)malloc(cols * sizeof(float));
+        if (matrix.mat[i] == NULL) {
+            fprintf(stderr, "Memory allocation failed for matrix columns.\n");
+
+            // Free any previously allocated rows in case of failure
+            for (int k = 0; k < i; k++) {
+                free(matrix.mat[k]);
+            }
+            free(matrix.mat);
+
+            matrix.rows = matrix.cols = 0;
+            return matrix;
+        }
+
+        // Initialize each element in the row to zero
+        for (j = 0; j < cols; j++) {
+            matrix.mat[i][j] = 0.0;
+        }
     }
+
     return matrix;
 }
 
@@ -181,10 +209,10 @@ Matrix norm(Matrix matrix){
     for (i=0; i<D.rows;i++){
         for (j=0; j<D.cols; j++){
             if(i==j){
-                inverse_sqrt_D.mat[i][j] = 1 / sqrt(D.mat[i][j]);}  
+                inverse_sqrt_D.mat[i][j] = 1 / sqrt(D.mat[i][j]);} 
+             
         }
     }
-
     norm = multiply_matrices(multiply_matrices(inverse_sqrt_D,A),inverse_sqrt_D);
     return norm;
 }
