@@ -4,35 +4,63 @@
 #include <math.h>
 #include "symnmf.h"
 
-//allocating space for the matrix
+
+/* Allocating space for a matrix and initializing all elements to zero */
 Matrix create_matrix(int rows, int cols) {
     Matrix matrix;
-    int i;
+    int i, j, k;
+
     matrix.rows = rows;
     matrix.cols = cols;
 
+    /* Allocate memory for the matrix rows */
     matrix.mat = (float **)malloc(rows * sizeof(float *));
+    if (matrix.mat == NULL) {
+        fprintf(stderr, "Memory allocation failed for matrix rows.\n");
+        matrix.rows = matrix.cols = 0;
+        return matrix;
+    }
+
+    /* Allocate and initialize each row to zero */
     for (i = 0; i < rows; i++) {
         matrix.mat[i] = (float *)malloc(cols * sizeof(float));
+        if (matrix.mat[i] == NULL) {
+            fprintf(stderr, "Memory allocation failed for matrix columns.\n");
+
+            /* Free any previously allocated rows in case of failure */
+            for (k = 0; k < i; k++) {
+                free(matrix.mat[k]);
+            }
+            free(matrix.mat);
+
+            matrix.rows = matrix.cols = 0;
+            return matrix;
+        }
+
+        /* Initialize each element in the row to zero */
+        for (j = 0; j < cols; j++) {
+            matrix.mat[i][j] = 0.0;
+        }
     }
+
     return matrix;
 }
 
-// Function to create an empty matrix of size rows x cols
+/* Function to create an empty matrix of size rows x cols */
 Matrix read_matrix(char filename[]){
     FILE *file;
     int rows = 0, cols = 0;
     char line[256];
     Matrix mat;
     int i;
-    file = fopen(filename, "r");// Open the file for reading
+    file = fopen(filename, "r"); /* Open the file for reading */
     if (file == NULL) {
         mat.cols = 0;
         mat.rows = 0;
         mat.mat = NULL;
         return mat;}
 
-    //determine the number of rows and columns
+    /* determine the number of rows and columns */
     while (fgets(line, sizeof(line), file)) {
         int current_cols = 0;
         char *token = strtok(line, ",");       
@@ -42,21 +70,21 @@ Matrix read_matrix(char filename[]){
             token = strtok(NULL, ",");
         }
         if (current_cols > cols) {
-            cols = current_cols;// Update the maximum columns found  
+            cols = current_cols;/* Update the maximum columns found */
         }
     }
     mat = create_matrix(rows,cols);
-    rewind(file);// Reset file pointer to the beginning of the file
+    rewind(file); /* Reset file pointer to the beginning of the file */
     i = 0;
     while (fgets(line, sizeof(line), file) && i < rows) {
         int col = 0;
         char *token = strtok(line, ",");
         while (token!=NULL) {
-            mat.mat[i][col++] = atof(token); // Convert string to float
+            mat.mat[i][col++] = atof(token); /* Convert string to float */
             token = strtok(NULL, ",");}
         i++;
     }
-    fclose(file); // Close the file
+    fclose(file); /* Close the file */
     return mat;
     }
 
@@ -70,7 +98,7 @@ double euclid_distance(float *point1, float *point2, int n) {
     return sqrt(sum);
 }
 
-// Print the matrix
+/* Print the matrix */
 void print_matrix(Matrix matrix){
     int i;
     int j;
@@ -83,7 +111,7 @@ void print_matrix(Matrix matrix){
     }
 }
 
-// Free allocated memory
+/* Free allocated memory */
 void free_matrix(Matrix matrix){
     int i;
     for (i = 0; i < matrix.rows; i++) {
@@ -92,10 +120,10 @@ void free_matrix(Matrix matrix){
     free(matrix.mat);
 }
 
-//Compute the Similarity Matrix
+/* Compute the Similarity Matrix */
 Matrix sym(Matrix matrix){
     int n  = matrix.rows; 
-    Matrix sym = create_matrix(n, n);   // the number of data points
+    Matrix sym = create_matrix(n, n);   /* the number of data points */
     int i;
     int j;
 
@@ -111,20 +139,20 @@ Matrix sym(Matrix matrix){
     return sym;  
 }
 
-// the sum of two data points (a row in the matrix) 
+/* the sum of two data points (a row in the matrix) */
 float sum(float *arr, int size) {
     float total = 0.0;
     int i;
     for (i = 0; i < size; i++) {
-        total += arr[i];  // Dereference the pointer to get the value
+        total += arr[i];  /* Dereference the pointer to get the value */
     }
     return total;
 }
 
-//Compute the diagonal degree Matrix
+/* Compute the diagonal degree Matrix */
 Matrix ddg(Matrix matrix){
     Matrix sym_mat = sym(matrix);
-    int n  = sym_mat.rows;   //number of data points 
+    int n  = sym_mat.rows;   /* number of data points */
     int i;
     int j;
     Matrix ddg = create_matrix(n,n);
@@ -140,23 +168,23 @@ Matrix ddg(Matrix matrix){
     return ddg;  
 }
 
-// Function to multiply matrices A and B, resulting in matrix C
+/* Function to multiply matrices A and B, resulting in matrix C */
 Matrix multiply_matrices(Matrix A, Matrix B) {
     int i;
     int j;
     int k;
     Matrix C;
     
-    // Check if multiplication is possible (A.cols must equal B.rows)
+    /* Check if multiplication is possible (A.cols must equal B.rows) */
     if (A.cols != B.rows) {
         printf("Matrix multiplication is not possible due to incompatible dimensions.\n");
         exit(EXIT_FAILURE);
     }
     
-    // Create result matrix C with dimensions A.rows x B.cols
+    /* Create result matrix C with dimensions A.rows x B.cols */
     C = create_matrix(A.rows, B.cols);
     
-    // Perform the multiplication
+    /* Perform the multiplication */
     for (i = 0; i < A.rows; i++) {
         for (j = 0; j < B.cols; j++) {
             C.mat[i][j] = 0;  
@@ -169,7 +197,7 @@ Matrix multiply_matrices(Matrix A, Matrix B) {
     return C;
 }
 
-//Compute the normalized similarity matrix
+/* Compute the normalized similarity matrix */
 Matrix norm(Matrix matrix){
     Matrix D = ddg(matrix);
     Matrix inverse_sqrt_D = create_matrix(D.rows,D.cols);
@@ -181,10 +209,10 @@ Matrix norm(Matrix matrix){
     for (i=0; i<D.rows;i++){
         for (j=0; j<D.cols; j++){
             if(i==j){
-                inverse_sqrt_D.mat[i][j] = 1 / sqrt(D.mat[i][j]);}  
+                inverse_sqrt_D.mat[i][j] = 1 / sqrt(D.mat[i][j]);} 
+             
         }
     }
-
     norm = multiply_matrices(multiply_matrices(inverse_sqrt_D,A),inverse_sqrt_D);
     return norm;
 }
@@ -200,7 +228,6 @@ int main(int argc,char *argv[]) {
     strcpy(filename, argv[2]);
 
     matrix = read_matrix(filename);
-    print_matrix(matrix);
 
     if (strcmp(goal, "sym") == 0){print_matrix(sym(matrix));}
     if (strcmp(goal, "ddg") == 0){print_matrix(ddg(matrix));}
