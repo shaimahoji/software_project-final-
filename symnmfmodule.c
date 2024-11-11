@@ -8,7 +8,7 @@
 /* Convert a Python list into the Matrix struct */
 Matrix *listMatrixConverter(PyObject *data_list) {
     if (!PyList_Check(data_list)) {
-        PyErr_SetString(PyExc_ValueError, "Input data must be a 2D list");
+        PyErr_SetString(PyExc_ValueError,"An Error Has Occurred");
         return NULL;
     }
 
@@ -22,7 +22,7 @@ Matrix *listMatrixConverter(PyObject *data_list) {
     Matrix *mat = (Matrix*) malloc(sizeof(Matrix));
     *mat = createMatrix((int)rows, (int)cols);
     if (mat->mat == NULL) {
-        fprintf(stdout, "An Error Has Occurred\n");
+        fprintf(stdout,"An Error Has Occurred");
         free(mat);
         return NULL;
     }
@@ -30,14 +30,14 @@ Matrix *listMatrixConverter(PyObject *data_list) {
     for (Py_ssize_t i = 0; i < rows; ++i) {
         PyObject *row = PyList_GetItem(data_list, i);
         if (!PyList_Check(row) || PyList_Size(row) != cols) {
-            PyErr_SetString(PyExc_ValueError, "All rows must be lists of equal length");
+            PyErr_SetString(PyExc_ValueError, "An Error Has Occurred");
             free(mat); /* Clean up in case of error */
             return NULL;
         }
         for (Py_ssize_t j = 0; j < cols; ++j) {
             PyObject *item = PyList_GetItem(row, j);
             if (!PyFloat_Check(item) && !PyLong_Check(item)) {
-                PyErr_SetString(PyExc_TypeError, "All elements in the list must be numeric (float or int)");
+                PyErr_SetString(PyExc_TypeError,"An Error Has Occurred");
                 free(mat);
                 return NULL;
             }
@@ -100,7 +100,7 @@ static PyObject *Csymnmf(PyObject *self, PyObject *args){
 
     /* Ensure the input is a 2D Python list */
     if (!PyList_Check(data_list_obj1)||(!PyList_Check(data_list_obj2))) {
-        PyErr_SetString(PyExc_TypeError, "Expected a 2D list as input");
+        PyErr_SetString(PyExc_TypeError, "An Error Has Occurred");
         return NULL;
     }
 
@@ -136,7 +136,7 @@ static PyObject *Csym(PyObject *self, PyObject *args){
 
     /* Ensure the input is a 2D Python list */
     if (!PyList_Check(data_list_obj)) {
-        PyErr_SetString(PyExc_TypeError, "Expected a 2D list as input");
+        PyErr_SetString(PyExc_TypeError,"An Error Has Occurred");
         return NULL;
     }
 
@@ -170,7 +170,7 @@ static PyObject *Cddg(PyObject *self, PyObject *args){
 
     /* Ensure the input is a 2D Python list */
     if (!PyList_Check(data_list_obj)) {
-        PyErr_SetString(PyExc_TypeError, "Expected a 2D list as input");
+        PyErr_SetString(PyExc_TypeError, "An Error Has Occurred");
         return NULL;
     }
 
@@ -204,7 +204,7 @@ static PyObject *Cnorm(PyObject *self, PyObject *args){
 
     /* Ensure the input is a 2D Python list */
     if (!PyList_Check(data_list_obj)) {
-        PyErr_SetString(PyExc_TypeError, "Expected a 2D list as input");
+        PyErr_SetString(PyExc_TypeError,"An Error Has Occurred");
         return NULL;
     }
 
@@ -219,7 +219,7 @@ static PyObject *Cnorm(PyObject *self, PyObject *args){
     free(converted_mat); /* Free memory allocated for converted_mat */
 
     /* Convert the result Matrix back to a Python 2D list */
-    PyObject *result_py = matrix_list_converter(result);
+    PyObject *result_py = matrixListConverter(result);
     if (result_py == NULL) {
         return NULL;
     }

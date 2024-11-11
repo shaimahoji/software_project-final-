@@ -16,16 +16,15 @@ Matrix createMatrix(int rows, int cols) {
     /* Allocate memory for the matrix rows */
     matrix.mat = (double**)malloc(rows * sizeof(double *));
     if (matrix.mat == NULL) {
-        fprintf(stderr, "Memory allocation failed for matrix rows.\n");
-        matrix.rows = matrix.cols = 0;
-        return matrix;
+        fprintf(stderr, "An Error Has Occurred");
+        return EXIT_FAILURE;
     }
 
     /* Allocating memory for each row and initializing its elements to zero */
     for (i = 0; i < rows; i++) {
         matrix.mat[i] = (double *)malloc(cols * sizeof(double));
         if (matrix.mat[i] == NULL) {
-            fprintf(stderr, "Memory allocation failed for matrix columns.\n");
+            fprintf(stderr,"An Error Has Occurred");
 
             /* Free previously allocated rows in case of failure */
             for (k = 0; k < i; k++) {
@@ -33,8 +32,7 @@ Matrix createMatrix(int rows, int cols) {
             }
             free(matrix.mat);
 
-            matrix.rows = matrix.cols = 0;
-            return matrix;
+            return EXIT_FAILURE;
         }
 
         for (j = 0; j < cols; j++) {
@@ -100,8 +98,7 @@ double euclidDistance(double *point1, double *point2, int n) {
 
 /* Function to print a matrix */
 void printMatrix(Matrix matrix){
-    int i;
-    int j;
+    int i,j;
     for (i = 0; i < matrix.rows; i++) {
         for (j = 0; j < matrix.cols; j++) {
             if (j+1 == matrix.cols){printf("%.4f", matrix.mat[i][j]);}
@@ -122,15 +119,13 @@ void freeMatrix(Matrix matrix){
 
 /* Multiplying two matrices */
 Matrix multiplyMatrices(Matrix A, Matrix B) {
-    int i;
-    int j;
-    int k;
+    int i,j,k;
     Matrix C;
     
     /* Check if multiplication is possible (A.cols must equal B.rows) */
     if (A.cols != B.rows) {
-        printf("Matrix multiplication is not possible due to incompatible dimensions.\n");
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "An Error Has Occurred");
+        return EXIT_FAILURE;
     }
     
     /* Create the multiplication result matrix, C, with the dimensions A.rows x B.cols */
@@ -157,16 +152,19 @@ Matrix divisionMatrices_ij(Matrix A, Matrix B){
 
     /* Check if division is possible (B must be square and invertible) */
     if ((B.rows != A.rows)||(A.cols!=B.cols)) {
-        printf("Matrix division is not possible.\n");
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "An Error Has Occurred");
+        return EXIT_FAILURE;
     }
 
     C = createMatrix(A.rows,A.cols);
 
-    for (i=0; i<A.rows;i++){
-        for (j=0; j<A.cols; j++){
-                if(B.mat[i][j]==0){printf("divide by zero");}
-                C.mat[i][j] =A.mat[i][j]/B.mat[i][j];
+    for (i = 0; i < A.rows; i++){
+        for (j = 0; j < A.cols; j++){
+                if(B.mat[i][j] == 0){        
+                    fprintf(stderr, "An Error Has Occurred");
+                    return EXIT_FAILURE;
+                }
+                C.mat[i][j] = A.mat[i][j]/B.mat[i][j];
             }     
         }
     
@@ -177,12 +175,12 @@ Matrix divisionMatrices_ij(Matrix A, Matrix B){
 Matrix multiplyMatrices_ij(Matrix A, Matrix B){
 
     Matrix C;
-    int i,j;
+    int i, j;
 
     /* Check if division is possible (B must be square and invertible) */
     if ((B.rows != A.rows)||(A.cols!=B.cols)) {
-        printf("Matrix multiplication is not possible.\n");
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "An Error Has Occurred");
+        return EXIT_FAILURE;
     }
 
     C = createMatrix(A.rows,A.cols);
