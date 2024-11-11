@@ -1,17 +1,17 @@
 # Compiler and flags
-CC = gcc                                                # The C compiler to use
-CFLAGS = -ansi -Wall -Wextra -Werror -pedantic-errors   # Compiler flags for strict C standard and warnings
+CC = gcc
+CFLAGS = -ansi -Wall -Wextra -Werror -pedantic-errors
 
 # Target executable and object files
-TARGET = symnmf  # Name of the final executable
+TARGET = symnmf
 OBJS = symnmf.o
 
-# Default target: build everything (executable and Python extension)
+# Default target: build everything
 all: $(TARGET) build_ext
 
 # Link object files to create the executable
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) -lm   # With math library
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) -lm
 
 # Compile symnmf.c into an object file
 symnmf.o: symnmf.c symnmf.h
@@ -19,12 +19,12 @@ symnmf.o: symnmf.c symnmf.h
 
 # Build Python extension using setup.py
 build_ext:
-	python3 setup.py build_ext --inplace      # Build the Python C extension in the current directory
+	python3 setup.py build_ext --inplace
 
 # Clean generated files
 clean:
-	rm -f $(TARGET) $(OBJS) *.so   # Remove the executable, object files, and shared objects
-	rm -rf build                   # Remove the build directory created by setup.py
+	rm -f $(TARGET) $(OBJS) *.so
+	rm -rf build
 
 # Phony targets to avoid conflicts with files of the same name
 .PHONY: all clean build_ext

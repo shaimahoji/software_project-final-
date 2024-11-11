@@ -1,33 +1,36 @@
+import pandas as pd
 import numpy as np
 import sys
 import symnmf as NMF 
 import hw1
+from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
 
 
 np.random.seed(1234)
 
-# Calculating the silhouette score for SymNMF clusters (in matrix H)
 def silhouetteScoreH(H, data_points):
-
-    # Determining the cluster labels by taking the index of the maximum value in each row of H
     cluster_labels = np.argmax(H, axis=1)
-
+    #return silhouette_score(H, cluster_labels)
     return silhouette_score(data_points, cluster_labels, metric='euclidean')
 
-
+# MAIN
 def main(): 
-    # Parse command line arguments - K, file_name (based on project requirements: we can assume they're valid)
+    # Parse command line arguments - K, goal, file_name
+    # Given in assignment, we can assume that inputs are valid:
+
+    # int, < N 
     K = int(sys.argv[1])
+
+    #contains N data points for all above goal.
     input_file = sys.argv[2]
 
-    # Reading datapoints from the input file
+    # datapoints
     X = NMF.read_data(input_file)
+    #the SymNMF clusters are in here, they're accessed as explained in 1.5 in the PDF
+    H = NMF.handle_symnmf(X,K) #according to previous tests: CORRECT
 
-    # Obtaining matrix H, which contains the SymNMF clusters(they're accessed as explained in 1.5 in the project file)
-    H = NMF.handle_symnmf(X,K)
-
-    # Obtaining the kmeans HW1 cluster labels
+    #the kmeans HW1 clusters
     hw1_labels = hw1.Kmeans(X, K)
                     
     symnmf_score = silhouetteScoreH(H, X)
@@ -35,7 +38,6 @@ def main():
 
     hw1_score = silhouette_score(X, hw1_labels, metric='euclidean')
     print("kmeans: %.4f" % hw1_score)
-
 
 if __name__ == "__main__":
     main()

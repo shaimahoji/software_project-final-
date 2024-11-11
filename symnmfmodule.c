@@ -118,6 +118,8 @@ static PyObject *Csymnmf(PyObject *self, PyObject *args){
     /* Convert the result Matrix back to a Python 2D list */
 
     PyObject *result_py = matrixListConverter(result);
+    freeMatrix(result);
+
     if (result_py == NULL) {
         return NULL;
     }
@@ -152,6 +154,7 @@ static PyObject *Csym(PyObject *self, PyObject *args){
 
     /* Convert the result Matrix back to a Python 2D list */
     PyObject *result_py = matrixListConverter(result);
+    freeMatrix(result);
     if (result_py == NULL) {
         return NULL;
     }
@@ -186,6 +189,7 @@ static PyObject *Cddg(PyObject *self, PyObject *args){
 
     /* Convert the result Matrix back to a Python 2D list */
     PyObject *result_py = matrixListConverter(result);
+    freeMatrix(result);
     if (result_py == NULL) {
         return NULL;
     }
@@ -220,6 +224,7 @@ static PyObject *Cnorm(PyObject *self, PyObject *args){
 
     /* Convert the result Matrix back to a Python 2D list */
     PyObject *result_py = matrixListConverter(result);
+    freeMatrix(result);
     if (result_py == NULL) {
         return NULL;
     }

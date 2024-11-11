@@ -17,7 +17,7 @@ Matrix createMatrix(int rows, int cols) {
     matrix.mat = (double**)malloc(rows * sizeof(double *));
     if (matrix.mat == NULL) {
         fprintf(stderr, "An Error Has Occurred");
-        return EXIT_FAILURE;
+        exit(EXIT_FAILURE);
     }
 
     /* Allocating memory for each row and initializing its elements to zero */
@@ -32,7 +32,7 @@ Matrix createMatrix(int rows, int cols) {
             }
             free(matrix.mat);
 
-            return EXIT_FAILURE;
+            exit(EXIT_FAILURE);
         }
 
         for (j = 0; j < cols; j++) {
@@ -125,7 +125,7 @@ Matrix multiplyMatrices(Matrix A, Matrix B) {
     /* Check if multiplication is possible (A.cols must equal B.rows) */
     if (A.cols != B.rows) {
         fprintf(stderr, "An Error Has Occurred");
-        return EXIT_FAILURE;
+        exit(EXIT_FAILURE);
     }
     
     /* Create the multiplication result matrix, C, with the dimensions A.rows x B.cols */
@@ -153,7 +153,7 @@ Matrix divisionMatrices_ij(Matrix A, Matrix B){
     /* Check if division is possible (B must be square and invertible) */
     if ((B.rows != A.rows)||(A.cols!=B.cols)) {
         fprintf(stderr, "An Error Has Occurred");
-        return EXIT_FAILURE;
+        exit(EXIT_FAILURE);
     }
 
     C = createMatrix(A.rows,A.cols);
@@ -162,7 +162,7 @@ Matrix divisionMatrices_ij(Matrix A, Matrix B){
         for (j = 0; j < A.cols; j++){
                 if(B.mat[i][j] == 0){        
                     fprintf(stderr, "An Error Has Occurred");
-                    return EXIT_FAILURE;
+                    exit(EXIT_FAILURE);
                 }
                 C.mat[i][j] = A.mat[i][j]/B.mat[i][j];
             }     
@@ -180,7 +180,7 @@ Matrix multiplyMatrices_ij(Matrix A, Matrix B){
     /* Check if division is possible (B must be square and invertible) */
     if ((B.rows != A.rows)||(A.cols!=B.cols)) {
         fprintf(stderr, "An Error Has Occurred");
-        return EXIT_FAILURE;
+        exit(EXIT_FAILURE);
     }
 
     C = createMatrix(A.rows,A.cols);
@@ -408,6 +408,7 @@ int main(int argc,char *argv[]) {
     char goal[256];
     char filename[256];
     Matrix matrix;
+    Matrix result;
 
     /* Check if the correct number of arguments is provided */
     if ((argc != 3)){return 1;}
@@ -419,9 +420,13 @@ int main(int argc,char *argv[]) {
     matrix = readMatrix(filename);
 
     /* Based on the goal,  compute and print the corresponding matrix */
-    if (strcmp(goal, "sym") == 0){printMatrix(sym(matrix));}
-    if (strcmp(goal, "ddg") == 0){printMatrix(ddg(matrix));}
-    if (strcmp(goal, "norm") == 0){printMatrix(norm(matrix));}
+    if (strcmp(goal, "sym") == 0){result = sym(matrix);}
+    if (strcmp(goal, "ddg") == 0){result = ddg(matrix);}
+    if (strcmp(goal, "norm") == 0){result = norm(matrix);}
+    
+    printMatrix(result);
+    freeMatrix(result);
+    freeMatrix(matrix);
 
     return 0;
 }
