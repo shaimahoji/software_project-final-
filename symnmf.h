@@ -33,14 +33,3 @@ void freeMatrix(Matrix matrix);
 Matrix converge(Matrix init_H,Matrix W);
 
 #endif
-
-// old comment: /* Representing the matrix as a pointer to int pointres*/
-/*
-Matrix create_matrix(int rows, int cols);
-void print_matrix(Matrix matrix);
-Matrix sym(Matrix matrix);
-Matrix ddg(Matrix matrix);
-Matrix norm(Matrix matrix);
-void free_matrix(Matrix matrix);
-Matrix converge(Matrix init_H,Matrix W);
-*/
