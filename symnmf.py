@@ -87,13 +87,6 @@ def print_matrix(matrix):
         formatted_row = ",".join(f"{val:.4f}" for val in row)
         print(formatted_row)
 
-def get_list_dimensions(lst):
-    if isinstance(lst, list):
-        if len(lst) == 0:
-            return (0,0)  # Empty list has no dimensions
-        return (len(lst),0) + get_list_dimensions(lst[0])
-    return ()  # Base case: non-list element
-
 def get_matrix_dimensions(matrix):
 
     if not matrix or not isinstance(matrix, list):  # Check if the matrix is empty or invalid
