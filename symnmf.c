@@ -4,35 +4,60 @@
 #include <math.h>
 #include "symnmf.h"
 
-//allocating space for the matrix
-Matrix create_matrix(int rows, int cols) {
+
+/* Allocating memory for a matrix and initializing all its elements to zero */
+Matrix createMatrix(int rows, int cols) {
     Matrix matrix;
-    int i;
+    int i, j, k;
+
     matrix.rows = rows;
     matrix.cols = cols;
 
-    matrix.mat = (float **)malloc(rows * sizeof(float *));
-    for (i = 0; i < rows; i++) {
-        matrix.mat[i] = (float *)malloc(cols * sizeof(float));
+    /* Allocate memory for the matrix rows */
+    matrix.mat = (double**)malloc(rows * sizeof(double *));
+
+    if (matrix.mat == NULL) {
+        fprintf(stderr, "An Error Has Occurred");
+        exit(EXIT_FAILURE);
     }
+
+    /* Allocating memory for each row and initializing its elements to zero */
+    for (i = 0; i < rows; i++) {
+        if(cols == 0){matrix.mat[i] = (double *)malloc((cols+1) * sizeof(double));}
+        else{matrix.mat[i] = (double *)malloc(cols * sizeof(double));}
+        if (matrix.mat[i] == NULL) {
+            fprintf(stderr,"An Error Has Occurred");
+
+            /* Free previously allocated rows in case of failure */
+            for (k = 0; k < i; k++) {
+                free(matrix.mat[k]);
+            }
+            free(matrix.mat);
+
+            exit(EXIT_FAILURE);
+        }
+
+        for (j = 0; j < cols; j++) {
+            matrix.mat[i][j] = 0.0;
+        }
+    }
+
     return matrix;
 }
 
-// Function to create an empty matrix of size rows x cols
-Matrix read_matrix(char filename[]){
+/* Function to create an empty matrix of size rows x cols */
+Matrix readMatrix(char filename[]){
     FILE *file;
     int rows = 0, cols = 0;
     char line[256];
     Matrix mat;
     int i;
-    file = fopen(filename, "r");// Open the file for reading
+    file = fopen(filename, "r"); /* Open the file for reading */
     if (file == NULL) {
-        mat.cols = 0;
-        mat.rows = 0;
-        mat.mat = NULL;
-        return mat;}
+        fprintf(stderr, "An Error Has Occurred");
+        exit(EXIT_FAILURE);}
 
-    //determine the number of rows and columns
+    /* Determine the number of rows and columns */
     while (fgets(line, sizeof(line), file)) {
         int current_cols = 0;
         char *token = strtok(line, ",");       
@@ -42,25 +67,27 @@ Matrix read_matrix(char filename[]){
             token = strtok(NULL, ",");
         }
         if (current_cols > cols) {
-            cols = current_cols;// Update the maximum columns found  
+            cols = current_cols;/* Update the maximum columns found */
         }
     }
-    mat = create_matrix(rows,cols);
-    rewind(file);// Reset file pointer to the beginning of the file
+    
+    mat = createMatrix(rows,cols);
+    rewind(file); /* Reset file pointer to the beginning of the file */
     i = 0;
     while (fgets(line, sizeof(line), file) && i < rows) {
         int col = 0;
         char *token = strtok(line, ",");
         while (token!=NULL) {
-            mat.mat[i][col++] = atof(token); // Convert string to float
+            mat.mat[i][col++] = (double)atof(token); 
             token = strtok(NULL, ",");}
         i++;
     }
-    fclose(file); // Close the file
+    fclose(file); /* Close the file */
     return mat;
     }
 
-double euclid_distance(float *point1, float *point2, int n) {
+/* Calculating the Euclidean distance between two points */
+double euclidDistance(double *point1, double *point2, int n) {
     double sum = 0.0;
     int i;
     for (i = 0 ; i<n ;i++) {
@@ -70,10 +97,9 @@ double euclid_distance(float *point1, float *point2, int n) {
     return sqrt(sum);
 }
 
-// Print the matrix
-void print_matrix(Matrix matrix){
-    int i;
-    int j;
+/* Function to print a matrix */
+void printMatrix(Matrix matrix){
+    int i,j;
     for (i = 0; i < matrix.rows; i++) {
         for (j = 0; j < matrix.cols; j++) {
             if (j+1 == matrix.cols){printf("%.4f", matrix.mat[i][j]);}
@@ -83,8 +109,8 @@ void print_matrix(Matrix matrix){
     }
 }
 
-// Free allocated memory
-void free_matrix(Matrix matrix){
+/* Free allocated memory for a matrix */
+void freeMatrix(Matrix matrix){
     int i;
     for (i = 0; i < matrix.rows; i++) {
         free(matrix.mat[i]);
@@ -92,71 +118,21 @@ void free_matrix(Matrix matrix){
     free(matrix.mat);
 }
 
-//Compute the Similarity Matrix
-Matrix sym(Matrix matrix){
-    int n  = matrix.rows; 
-    Matrix sym = create_matrix(n, n);   // the number of data points
-    int i;
-    int j;
-
-    for (i = 0; i < n; i++) {
-        for (j = 0; j < n; j++) {
-            if(i!=j){
-                float dist = euclid_distance(matrix.mat[i],matrix.mat[j],matrix.cols);
-                sym.mat[i][j]= exp(-(dist*dist)/2);}
-            else{sym.mat[i][j]=0;}
-        }
-    }
-    
-    return sym;  
-}
-
-// the sum of two data points (a row in the matrix) 
-float sum(float *arr, int size) {
-    float total = 0.0;
-    int i;
-    for (i = 0; i < size; i++) {
-        total += arr[i];  // Dereference the pointer to get the value
-    }
-    return total;
-}
-
-//Compute the diagonal degree Matrix
-Matrix ddg(Matrix matrix){
-    Matrix sym_mat = sym(matrix);
-    int n  = sym_mat.rows;   //number of data points 
-    int i;
-    int j;
-    Matrix ddg = create_matrix(n,n);
-
-    for (i = 0; i < n; i++) {
-        for (j = 0; j < n; j++) {
-            if(i==j){
-                ddg.mat[i][j]= sum(sym_mat.mat[i],n);
-                }
-            else{ddg.mat[i][j]=0;}
-        }
-    } 
-    return ddg;  
-}
-
-// Function to multiply matrices A and B, resulting in matrix C
-Matrix multiply_matrices(Matrix A, Matrix B) {
-    int i;
-    int j;
-    int k;
+/* Multiplying two matrices */
+Matrix multiplyMatrices(Matrix A, Matrix B) {
+    int i,j,k;
     Matrix C;
     
-    // Check if multiplication is possible (A.cols must equal B.rows)
+    /* Check if multiplication is possible (A.cols must equal B.rows) */
     if (A.cols != B.rows) {
-        printf("Matrix multiplication is not possible due to incompatible dimensions.\n");
+        fprintf(stderr, "An Error Has Occurred");
         exit(EXIT_FAILURE);
     }
     
-    // Create result matrix C with dimensions A.rows x B.cols
-    C = create_matrix(A.rows, B.cols);
+    /* Create the multiplication result matrix, C, with the dimensions A.rows x B.cols */
+    C = createMatrix(A.rows, B.cols);
     
-    // Perform the multiplication
+    /* Perform matrix multiplication */
     for (i = 0; i < A.rows; i++) {
         for (j = 0; j < B.cols; j++) {
             C.mat[i][j] = 0;  
@@ -169,42 +145,291 @@ Matrix multiply_matrices(Matrix A, Matrix B) {
     return C;
 }
 
-//Compute the normalized similarity matrix
-Matrix norm(Matrix matrix){
-    Matrix D = ddg(matrix);
-    Matrix inverse_sqrt_D = create_matrix(D.rows,D.cols);
-    Matrix A = sym(matrix);
-    Matrix norm; 
-    int i;
-    int j;
+/* Helper function to divide each element of matrix A by the corresponding element in matrix B */
+Matrix divisionMatrices_ij(Matrix A, Matrix B){
 
-    for (i=0; i<D.rows;i++){
-        for (j=0; j<D.cols; j++){
-            if(i==j){
-                inverse_sqrt_D.mat[i][j] = 1 / sqrt(D.mat[i][j]);}  
+    Matrix C;
+    int i,j;
+
+    /* Check if division is possible (B must be square and invertible) */
+    if ((B.rows != A.rows)||(A.cols!=B.cols)) {
+        fprintf(stderr, "An Error Has Occurred");
+        exit(EXIT_FAILURE);
+    }
+    
+    C = createMatrix(A.rows,A.cols);
+
+    for (i = 0; i < A.rows; i++){
+        for (j = 0; j < A.cols; j++){
+                if(B.mat[i][j] == 0){        
+                    fprintf(stderr, "An Error Has Occurred");
+                    exit(EXIT_FAILURE);
+                }
+                C.mat[i][j] = A.mat[i][j]/B.mat[i][j];
+            }     
+        }
+    
+    return C;
+}
+
+/* Helper function to multiply each element of matrix A by the corresponding element in matrix B */
+Matrix multiplyMatrices_ij(Matrix A, Matrix B){
+
+    Matrix C;
+    int i, j;
+
+    /* Check if division is possible (B must be square and invertible) */
+    if ((B.rows != A.rows)||(A.cols!=B.cols)) {
+        fprintf(stderr, "An Error Has Occurred");
+        exit(EXIT_FAILURE);
+    }
+    
+    C = createMatrix(A.rows,A.cols);
+    for (i=0; i<A.rows;i++){
+        for (j=0; j<A.cols; j++){
+                C.mat[i][j] =A.mat[i][j]*B.mat[i][j];
+            }     
+        }
+    
+    return C;
+}
+
+/* Helper function to multiply each element of a matrix by a constant */
+Matrix constMultMat(Matrix A, double num){
+
+    int i,j;
+    for (i = 0; i < A.rows; i++) {
+        for (j = 0; j < A.cols; j++) {
+            A.mat[i][j] = A.mat[i][j] * num;  
+        }
+    }
+    return A;
+}
+
+/* Helper function to add a constant to each element of a matrix */
+Matrix constAddMat(Matrix A, double num){
+
+    int i,j;
+    for (i = 0; i < A.rows; i++) {
+        for (j = 0; j < A.cols; j++) {
+            A.mat[i][j] = A.mat[i][j] + num;  
+        }
+    }
+    return A;
+}
+
+/* Helper function to compute the transpose of a matrix */
+Matrix transposeMatrix(Matrix A) {
+    Matrix A_T;
+    int i,j;
+    /* Creating the transposed matrix with swithced dimensions */
+    
+    A_T = createMatrix(A.cols, A.rows);
+
+
+    /*Filling the values of the transposed matrix*/
+    for (i = 0; i < A.rows; i++) {
+        for (j = 0; j < A.cols; j++) {
+            A_T.mat[j][i] = A.mat[i][j];
         }
     }
 
-    norm = multiply_matrices(multiply_matrices(inverse_sqrt_D,A),inverse_sqrt_D);
+    return A_T;
+}
+
+/* Update H : 1.4.2*/
+Matrix H_next_t(Matrix H_prev_t,Matrix W){
+    double beta = 0.5;
+    Matrix fract;
+    Matrix next_H;
+    Matrix H_prev_t_T = transposeMatrix(H_prev_t);
+    
+    /* The Numerator (top part) of the fraction in the rule (in the project file)*/
+    Matrix W_mult_prevH = multiplyMatrices(W,H_prev_t);
+
+    /* Previous H (Hi,j to the power of t) multiplied (matrix multiplication) by its transpose*/
+    Matrix pH_pHT_pH = multiplyMatrices(H_prev_t,H_prev_t_T);
+
+    /*The Denominator (bottom part) of the fraction*/
+    Matrix pH_pHT_pH2 = multiplyMatrices(pH_pHT_pH,H_prev_t);
+
+    /*The fraction itself*/
+    fract = constMultMat(divisionMatrices_ij(W_mult_prevH,pH_pHT_pH2),beta);
+    
+    fract = constAddMat(fract,(1-beta));
+
+    /*The desrired result (H sub i,j to the power of t+1)*/
+    next_H = multiplyMatrices_ij(H_prev_t,fract);
+    
+    freeMatrix(fract);
+    freeMatrix(W_mult_prevH);
+    freeMatrix(pH_pHT_pH);
+    freeMatrix(pH_pHT_pH2);
+
+    return next_H;
+}
+
+/*Convergence : 1.4.3*/
+Matrix converge(Matrix init_H,Matrix W){
+
+    Matrix prev_H = init_H;
+    int i, j, k; 
+    int max_iter = 300;
+    double epsilon = 1e-4;
+    double frobe_squared = 0.0;
+    Matrix current_H ;
+
+    current_H = createMatrix(prev_H.rows, prev_H.cols);
+    
+    /* Iterating until max_iter or convergence */
+    for(i = 0; i < max_iter; i += 1){
+
+        current_H = H_next_t(prev_H, W);
+
+        /* Calculating squared ||.||F */
+        for (k = 0; k < current_H.rows; k += 1) {
+            for (j = 0; j < current_H.cols; j++) {
+                double value = current_H.mat[k][j] - prev_H.mat[k][j];
+                frobe_squared += value * value; 
+            }
+        }
+
+        /* Checking for convergence */
+        if(frobe_squared < epsilon){
+            break;
+        }
+        
+        frobe_squared = 0.0;
+        freeMatrix(prev_H);
+        
+        prev_H = current_H;
+    }
+    return current_H;
+}
+
+/* Compute the Similarity Matrix */
+Matrix sym(Matrix matrix){
+    int n  = matrix.rows; 
+    Matrix sym = createMatrix(n, n);   /* n is the number of data points */
+    int i;
+    int j;
+
+    /* Loop through each pair of rows (data points) to compute the similarity */
+    for (i = 0; i < n; i += 1) {
+        for (j = 0; j < n; j += 1) {
+
+            if(i != j) {
+                double dist = euclidDistance(matrix.mat[i],matrix.mat[j],matrix.cols);
+                sym.mat[i][j] = exp(-(dist*dist)/2);
+            }
+
+            else {
+                sym.mat[i][j] = 0; /* Setting diagonal values to 0 */
+            }
+        }
+    }
+    
+    return sym;  
+}
+
+/* Sum of two data points (used for row summation) */
+double sum(double *arr, int size) {
+
+    double total = 0.0;
+    int i;
+
+    for (i = 0; i < size; i++) {
+        total += arr[i];  /* Dereferencing the pointer to get the value */
+    }
+
+    return total;
+}
+
+/* Compute the diagonal degree Matrix */
+Matrix ddg(Matrix matrix){
+
+    /* First, computing the similarity matrix */
+    Matrix sym_mat = sym(matrix);
+
+    /* n is number of data points */
+    int n  = sym_mat.rows;
+    Matrix ddg = createMatrix(n,n);
+
+    int i;
+    int j;
+
+    /* Fill in the diagonal of ddg with the sum of corresponding row elements from sym_mat */
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            if(i==j) {
+                /* Diagonal elements are the sum of the corresponding row in the similarity matrix */
+                ddg.mat[i][j]= sum(sym_mat.mat[i], n);
+            }
+            else {
+                /* Non-diagonal elements are set to 0 */
+                ddg.mat[i][j] = 0;
+            }
+        }
+    } 
+
+    freeMatrix(sym_mat);
+    return ddg;  
+}
+
+/* Compute the normalized similarity matrix */
+Matrix norm(Matrix matrix){
+    Matrix D = ddg(matrix);
+    Matrix inverse_sqrt_D = createMatrix(D.rows,D.cols);
+    Matrix A = sym(matrix);
+    Matrix invers_mul_A;
+    Matrix norm; 
+    int i, j;
+
+    for (i = 0; i < D.rows; i += 1){
+        for (j = 0; j < D.cols; j += 1){
+            if(i==j)
+            {
+                inverse_sqrt_D.mat[i][j] = (1 / sqrt(D.mat[i][j]));
+            } 
+             
+        }
+    }
+
+    invers_mul_A = multiplyMatrices(inverse_sqrt_D,A);
+    norm = multiplyMatrices(invers_mul_A,inverse_sqrt_D);
+    
+    freeMatrix(A);
+    freeMatrix(inverse_sqrt_D);
+    freeMatrix(D);
+    freeMatrix(invers_mul_A);
+
     return norm;
 }
 
 int main(int argc,char *argv[]) {
+
     char goal[256];
     char filename[256];
     Matrix matrix;
-    
+    Matrix result;
+
+    /* Check if the correct number of arguments is provided */
     if ((argc != 3)){return 1;}
 
+    /* Parse the goal and filename from command-line arguments */
     strcpy(goal, argv[1]);
     strcpy(filename, argv[2]);
 
-    matrix = read_matrix(filename);
-    print_matrix(matrix);
+    matrix = readMatrix(filename);
 
-    if (strcmp(goal, "sym") == 0){print_matrix(sym(matrix));}
-    if (strcmp(goal, "ddg") == 0){print_matrix(ddg(matrix));}
-    if (strcmp(goal, "norm") == 0){print_matrix(norm(matrix));}
+    /* Based on the goal,  compute and print the corresponding matrix */
+    if (strcmp(goal, "sym") == 0){result = sym(matrix);}
+    if (strcmp(goal, "ddg") == 0){result = ddg(matrix);}
+    if (strcmp(goal, "norm") == 0){result = norm(matrix);}
+    
+    printMatrix(result);
+    freeMatrix(result);
+    freeMatrix(matrix);
 
     return 0;
 }

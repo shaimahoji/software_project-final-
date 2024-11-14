@@ -4,9 +4,7 @@ import numpy
 module = Extension("mysymnmf",
                   sources=[
                     'symnmf.c',
-                    'symnmfmodule.c'
-                  ],
-                  include_dirs=[numpy.get_include()] 
+                    'symnmfmodule.c']  
                   )
 setup(name='mysymnmf',
      version='1.0',

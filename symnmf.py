@@ -5,135 +5,65 @@ import mysymnmf as symnmf
 
 np.random.seed(1234)
 
-# Get X (the N datapoints) from the input file.
+# Get X (the N datapoints) from the input file
 def read_data(filename):
-    data_array =  np.loadtxt(filename, delimiter=',')
-    return data_array
-
-
-def similarity_matrix(X):
-
-    n = X.shape[0]
-
-    # Initialization (guarantees that for all i=j: Aij = 0)
-    A = np.zeros((n, n))
-    
-    for i in range(n):
-        for j in range(i + 1, n):  # Only calculate for j > i
-            # Compute the squared Euclidean distance
-            dist_squared = np.sum((X[i] - X[j]) ** 2)
-            
-            # Apply the similarity formula
-            similarity = np.exp(-dist_squared / 2)
-            
-            # Assign the value symmetrically
-            A[i, j] = similarity
-            A[j, i] = similarity  # A[i, j] == A[j, i]
-
-    return A
-
-
-def diagonal_degree_matrix(X):
-    A = similarity_matrix(X)
-    # Computing the degrees. Example: d1 = the sum of the elements in the first row in A.
-    degrees = np.sum(A, axis=1)  # Sum of each row
-    D = np.diag(degrees)
-    return D
-
-
-def normalized_similarity_matrix(A, D):
-    # Computing D^{-1/2}
-    D_inv_sqrt = np.diag(1 / np.sqrt(np.diag(D)))
-
-    # Computing the normalized similarity matrix W. (@ is used for matrix multiplication)
-    W = D_inv_sqrt @ A @ D_inv_sqrt
-    return W
-
-##### check #####
-def deriving_hard_clustering(H):
-    # Deriving hard clustering
-    return np.argmax(H, axis=1)
+    try:
+        data_array = np.loadtxt(filename, delimiter=',')
+        return data_array.tolist()  # Convert to Python list
+    except Exception as e:  # Catch any exception
+        print("An Error Has Occurred")
+        sys.exit(1)  # Exit with failure status
 
 # Initialize H : 1.4.1
 def initialize_H(W, k):
-    # Calculating the average of all entries of W.
+
+    # Calculating the average of all entries of W
+    
     m = np.mean(W)
 
-    # helper variable
+    # The upper bound for values in H
     upper_bound = 2 * np.sqrt(m / k)
 
-    # Initializing H with values from the interval [0, upper_bound]
-    #H = np.random.uniform(0, upper_bound, (m, k))
+    # Initializing H with random values from the interval [0, upper_bound]
     H = np.random.uniform(0, upper_bound, (int(W.shape[0]), int(k)))
 
-    return H
+    return H.tolist() # Return H as a Python list
 
-# Update H : 1.4.2
-def H_next_t(H_prev_t, W, beta=0.5):
-
-    W_mult_prevH = np.dot(W,H_prev_t)
-
-    # H_prev_t * H_prev_t transposed * H_prev_t
-    pH_pHT_pH = np.dot(H_prev_t,H_prev_t.T)
-    pH_pHT_pH = np.dot(pH_pHT_pH,H_prev_t)
-
-    # The fraction in the rule
-    fract = beta * (W_mult_prevH / pH_pHT_pH)
-
-    next_H = H_prev_t * ((1-beta) + fract)
-
-    return next_H
-
-# Convergence : 1.4.3
-def converge(W, k, max_iter=300, epsilon=1e-4, beta=0.5):
-    init_H = initialize_H(W,k)
-    prev_H = init_H
-
-    for i in range(max_iter):
-
-        current_H = H_next_t(prev_H, W, beta)
-
-        # Calculating squared ||.||F
-        frobe_squared = np.sum((current_H - prev_H)**2)
-
-        if i == max_iter or frobe_squared < epsilon:
-            return current_H
-        
-        prev_H = current_H
 
 
 def handle_symnmf(X, k):
 
-    # A and D are found within finding W.
+    # Find the normalized version of X to obtain W
     W = handle_norm(X)
+    
+    
+    # Convert W to a numpy array for further processing
+    W = np.array(W)
 
-    H = converge(W, k)
+    # Initialize the H matrix
+    init_H = initialize_H(W,k)
+
+    # Call C-implemented SymNMF function
+    H = symnmf.Csymnmf(init_H,W.tolist())
 
     return H
 
-
+# Call C-implemented function that computes the similarity matrix from X
 def handle_sym(X):
-    #print("You selected sym")
-    #A = similarity_matrix(X)
     A = symnmf.Csym(X)
-    return A
+    return A # python list
 
-
+# Call C-implemented function that computes the Diagonal Degree Matrix
 def handle_ddg(X):
-    #print("You selected ddg")
-    #D = diagonal_degree_matrix(X)
     D = symnmf.Cddg(X)
-    return D
+    return D # python list
 
-
+# Call C-implemented function that computes the normalized similarity Matrix
 def handle_norm(X):
-    #print("You selected norm")
-    A = handle_sym(X)
-    D = handle_ddg(X)
-    W = normalized_similarity_matrix(A, D)
-    return W
+    W =  symnmf.Cnorm(X)
+    return W # python list
 
-# Dictionary mapping goals to functions.
+# Dictionary to map goal strings to corresponding function handlers
 switch = {
     "symnmf": handle_symnmf,
     "sym": handle_sym,
@@ -141,7 +71,7 @@ switch = {
     "norm": handle_norm
 }
 
-
+# Calling the appropriate function based on the provided goal
 def switch_case_operation(X, k, operation):
     if operation in switch:
         if operation == "symnmf":
@@ -149,37 +79,57 @@ def switch_case_operation(X, k, operation):
         else:
             return switch[operation](X)
     else:
-        #return "An Error Has Occurred"
         return None
 
-
+# Helper function to print matrix values with 4 decimal places
 def print_matrix(matrix):
     for row in matrix:
         formatted_row = ",".join(f"{val:.4f}" for val in row)
         print(formatted_row)
 
+def get_list_dimensions(lst):
+    if isinstance(lst, list):
+        if len(lst) == 0:
+            return (0,0)  # Empty list has no dimensions
+        return (len(lst),0) + get_list_dimensions(lst[0])
+    return ()  # Base case: non-list element
+
+def get_matrix_dimensions(matrix):
+
+    if not matrix or not isinstance(matrix, list):  # Check if the matrix is empty or invalid
+        return (0, 0)
+    
+    rows = len(matrix)
+    cols = len(matrix[0]) if all(isinstance(row, list) and len(row) == len(matrix[0]) for row in matrix) else 0
+    return (rows, cols)
 
 def main(): 
-    # Parse command line arguments - K, goal, file_name
-    # Given in assignment, we can assume that inputs are valid:
+    # Parse command line arguments - K, goal, file_name (based on project file: we can assume they're valid)
+    try:
+        K = int(sys.argv[1])
+        goal = sys.argv[2]
+        input_file = sys.argv[3]
 
-    # int, < N 
-    K = int(sys.argv[1])
-
-    # One of the following: symnmf, sym, ddg or norm.
-    goal = sys.argv[2]
-
-    #contains N data points for all above goal.
-    input_file = sys.argv[3]
-
-    # datapoints
+    except Exception as e:  # Catch any exception
+        print("An Error Has Occurred")
+        sys.exit(1)  # Exit with failure status
+    
+    # Load data points from the input file
     X = read_data(input_file)
+    
+    if(get_matrix_dimensions(X)[1] == 0):
+        y =[]
+        for x in X : 
+            y.append([x])
+        X=y
 
+    # Executing the operation based on the goal
     result = switch_case_operation(X, K, goal)
 
+    # Checking if the operation was successful
     if result is None:
         print("An Error Has Occurred")
-        sys.exit()
+        sys.exit(1)
     
     print_matrix(result)
 
